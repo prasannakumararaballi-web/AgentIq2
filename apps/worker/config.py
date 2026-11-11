@@ -19,3 +19,4 @@ class WorkerSettings(BaseSettings):
 
 
 worker_settings = WorkerSettings()
+

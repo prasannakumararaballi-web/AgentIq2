@@ -24,3 +24,4 @@ class RunAuditResponse(AgentIQBaseModel):
     run_id: UUID = Field(..., description="Target run ID")
     events: list[AuditEventResponse] = Field(default_factory=list, description="Chronological audit records")
     total: int = Field(..., description="Total audit events recorded")
+

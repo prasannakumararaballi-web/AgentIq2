@@ -22,3 +22,4 @@ async def get_me(
     current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> UserResponse:
     return current_user
+

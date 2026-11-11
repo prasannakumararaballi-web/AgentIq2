@@ -47,3 +47,4 @@ class DecisionUndoResponse(AgentIQBaseModel):
     status: DecisionStatus = Field(default="undone", description="Updated status: undone")
     undone_at: datetime = Field(..., description="UTC timestamp when the undo was recorded")
     message: str = Field(..., description="Status summary confirming reversal")
+

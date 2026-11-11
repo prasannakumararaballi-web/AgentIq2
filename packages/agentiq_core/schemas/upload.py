@@ -19,3 +19,4 @@ class UploadResponse(AgentIQBaseModel):
     column_count: Optional[int] = Field(default=None, description="Pre-computed column count if available")
     storage_path: str = Field(..., description="Internal preserved storage path for raw data")
     created_at: datetime = Field(..., description="Upload timestamp in UTC")
+

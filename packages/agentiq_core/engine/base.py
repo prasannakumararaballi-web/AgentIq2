@@ -26,3 +26,4 @@ class BaseEngine(ABC):
     ) -> dict[str, Any]:
         """Apply approved remediation decisions and emit cleaned dataset."""
         raise NotImplementedError
+

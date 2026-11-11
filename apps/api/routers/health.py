@@ -20,3 +20,4 @@ async def check_health() -> HealthResponse:
         version="0.1.0",
         timestamp=utc_now(),
     )
+

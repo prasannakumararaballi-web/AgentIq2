@@ -109,3 +109,4 @@ def test_invalid_category_raises_validation_error():
             description="test",
             created_at=datetime.now(timezone.utc),
         )
+

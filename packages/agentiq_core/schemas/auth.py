@@ -27,3 +27,4 @@ class UserResponse(AgentIQBaseModel):
         default_factory=list, description="List of workspaces accessible to the user"
     )
     created_at: datetime = Field(..., description="Account creation timestamp in UTC")
+

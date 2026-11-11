@@ -65,3 +65,4 @@ class FindingListResponse(AgentIQBaseModel):
     total: int = Field(..., description="Total count matching filter criteria")
     limit: int = Field(default=50, description="Page limit applied")
     offset: int = Field(default=0, description="Page offset applied")
+

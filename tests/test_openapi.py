@@ -47,3 +47,4 @@ def test_openapi_security_scheme_defined():
     schema = app.openapi()
     security_schemes = schema.get("components", {}).get("securitySchemes", {})
     assert "HTTPBearer" in security_schemes
+

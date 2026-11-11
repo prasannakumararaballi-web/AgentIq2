@@ -79,3 +79,4 @@ class RunSummaryResponse(AgentIQBaseModel):
     estimated_quality_score: float = Field(
         ..., ge=0.0, le=100.0, description="Calculated data quality score (0.0 - 100.0)"
     )
+

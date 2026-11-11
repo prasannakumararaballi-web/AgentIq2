@@ -18,3 +18,4 @@ class AgentIQBaseModel(BaseModel):
         validate_assignment=True,
         str_strip_whitespace=True,
     )
+

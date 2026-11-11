@@ -20,3 +20,4 @@ class ErrorResponse(AgentIQBaseModel):
     """Standard envelope for all HTTP 4xx and 5xx API error responses."""
 
     error: ErrorDetail
+

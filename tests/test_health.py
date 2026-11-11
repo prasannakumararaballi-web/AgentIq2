@@ -10,3 +10,4 @@ def test_health_check_returns_200(client: TestClient):
     assert data["status"] == "healthy"
     assert data["version"] == "0.1.0"
     assert "timestamp" in data
+

@@ -30,3 +30,4 @@ class RunCompareResponse(AgentIQBaseModel):
     preview_cleaned: list[dict[str, Any]] = Field(
         default_factory=list, description="Top N sample rows from cleaned data"
     )
+

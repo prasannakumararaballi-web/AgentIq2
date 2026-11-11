@@ -89,3 +89,4 @@ python scripts/generate_openapi.py
 For in-depth integration guides, see:
 - [`docs/API.md`](docs/API.md): Comprehensive endpoint specification, request/response bodies, permissions, and error codes.
 - [`docs/INTEGRATION.md`](docs/INTEGRATION.md): Frontend developer integration guide, authentication details, polling strategies, and TypeScript client generation instructions.
+

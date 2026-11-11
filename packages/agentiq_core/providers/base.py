@@ -27,3 +27,4 @@ class BaseAIProvider(ABC):
     ) -> dict[str, Any]:
         """Propose structured remediation action and parameters."""
         raise NotImplementedError
+

@@ -33,3 +33,4 @@ class ProjectListResponse(AgentIQBaseModel):
 
     items: list[ProjectResponse] = Field(default_factory=list, description="List of projects")
     total: int = Field(..., description="Total number of projects matching query")
+
