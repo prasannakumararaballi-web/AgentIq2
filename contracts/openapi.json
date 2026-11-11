@@ -1,0 +1,2646 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AgentIQ v2 API",
+    "description": "Data-quality and AI-assisted data-cleaning platform API.",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Local Development Server"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Service Health Check",
+        "description": "Returns service availability, active version, and current server UTC timestamp.",
+        "operationId": "check_health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get Current User Profile",
+        "description": "Returns authenticated user details and all authorized workspace memberships.",
+        "operationId": "get_me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "List Projects",
+        "description": "Retrieve all projects belonging to the active workspace.",
+        "operationId": "list_projects_api_v1_projects_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Authoritative active workspace ID header",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authoritative active workspace ID header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient workspace permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Create Project",
+        "description": "Create a new dataset cleaning project inside the authorized workspace.",
+        "operationId": "create_project_api_v1_projects_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Authoritative active workspace ID header",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authoritative active workspace ID header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient workspace permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/uploads": {
+      "post": {
+        "tags": [
+          "Uploads"
+        ],
+        "summary": "Upload Dataset File",
+        "description": "Upload raw dataset file via multipart/form-data with file validation and original preservation.",
+        "operationId": "upload_file_api_v1_uploads_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Authoritative active workspace ID header",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authoritative active workspace ID header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_file_api_v1_uploads_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid file type or format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient workspace permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File exceeds allowed size limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs": {
+      "post": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Trigger Execution Run",
+        "description": "Enqueue an asynchronous data profiling and AI-assisted anomaly detection run.",
+        "operationId": "create_run_api_v1_runs_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Authoritative active workspace ID header",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authoritative active workspace ID header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid run payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient workspace permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Get Run Status & Progress",
+        "description": "Poll current execution status and stage progress (recommended poll interval: 2 seconds).",
+        "operationId": "get_run_api_v1_runs__run_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Authoritative active workspace ID header",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authoritative active workspace ID header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient workspace permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Run not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/summary": {
+      "get": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Get Run Summary",
+        "description": "Retrieve high-level statistical overview and anomaly counts for a completed run.",
+        "operationId": "get_run_summary_api_v1_runs__run_id__summary_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Authoritative active workspace ID header",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authoritative active workspace ID header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSummaryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient workspace permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Run not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/findings": {
+      "get": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Get Run Findings",
+        "description": "Fetch paginated list of anomalies, quality violations, and AI-suggested remediations.",
+        "operationId": "get_run_findings_api_v1_runs__run_id__findings_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "missing_value",
+                    "outlier",
+                    "type_mismatch",
+                    "duplicate",
+                    "format_inconsistency",
+                    "business_rule_violation"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by category",
+              "title": "Category"
+            },
+            "description": "Filter by category"
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high",
+                    "critical"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by severity",
+              "title": "Severity"
+            },
+            "description": "Filter by severity"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Authoritative active workspace ID header",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authoritative active workspace ID header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindingListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient workspace permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Run not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/compare": {
+      "get": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Compare Raw vs Cleaned Dataset",
+        "description": "Retrieve per-column mutation statistics and sample row previews comparing raw vs cleaned state.",
+        "operationId": "get_run_comparison_api_v1_runs__run_id__compare_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Authoritative active workspace ID header",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authoritative active workspace ID header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunCompareResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient workspace permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Run not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/audit": {
+      "get": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Get Run Audit Trail",
+        "description": "Retrieve immutable chronological audit records of all decisions and status transitions.",
+        "operationId": "get_run_audit_api_v1_runs__run_id__audit_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Authoritative active workspace ID header",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authoritative active workspace ID header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunAuditResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient workspace permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Run not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/exports": {
+      "post": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Create Cleaned Dataset Export",
+        "description": "Generate a downloadable cleaned dataset in CSV, Parquet, or Excel format.",
+        "operationId": "create_run_export_api_v1_runs__run_id__exports_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Authoritative active workspace ID header",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authoritative active workspace ID header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunExportCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunExportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid export parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient workspace permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Run not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/findings/{finding_id}/decisions": {
+      "post": {
+        "tags": [
+          "Findings"
+        ],
+        "summary": "Submit Remediation Decision",
+        "description": "Commit a human reviewer decision (accept suggestion, specify custom rule, or ignore) for an anomaly finding.",
+        "operationId": "submit_finding_decision_api_v1_findings__finding_id__decisions_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "finding_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Finding Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Authoritative active workspace ID header",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authoritative active workspace ID header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FindingDecisionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindingDecisionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid decision payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient workspace permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Finding not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/decisions/{decision_id}/undo": {
+      "post": {
+        "tags": [
+          "Decisions"
+        ],
+        "summary": "Undo Remediation Decision",
+        "description": "Revert a previously committed cleaning decision back to pending review.",
+        "operationId": "undo_decision_api_v1_decisions__decision_id__undo_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "decision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Decision Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Authoritative active workspace ID header",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authoritative active workspace ID header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionUndoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Decision cannot be reverted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient workspace permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Decision not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuditEventResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique audit entry ID"
+          },
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "Associated run ID"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id",
+            "description": "User ID responsible for the event"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "description": "Action tag (e.g. run.started, finding.decided, decision.undone)"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details",
+            "description": "Detailed metadata or diff snapshot"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "UTC timestamp of the event"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "run_id",
+          "user_id",
+          "action",
+          "timestamp"
+        ],
+        "title": "AuditEventResponse",
+        "description": "Single immutable audit log entry."
+      },
+      "Body_upload_file_api_v1_uploads_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Raw dataset file (.csv, .parquet, .xlsx, .json)"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id",
+            "description": "Target project ID"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "project_id"
+        ],
+        "title": "Body_upload_file_api_v1_uploads_post"
+      },
+      "ColumnDiff": {
+        "properties": {
+          "column_name": {
+            "type": "string",
+            "title": "Column Name",
+            "description": "Name of the evaluated column"
+          },
+          "original_nulls": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Original Nulls",
+            "description": "Null count in the raw dataset"
+          },
+          "cleaned_nulls": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Cleaned Nulls",
+            "description": "Null count in the remediated dataset"
+          },
+          "changes_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Changes Count",
+            "description": "Total values mutated or cleaned in this column"
+          }
+        },
+        "type": "object",
+        "required": [
+          "column_name",
+          "original_nulls",
+          "cleaned_nulls",
+          "changes_count"
+        ],
+        "title": "ColumnDiff",
+        "description": "Statistical difference per column between raw and cleaned versions."
+      },
+      "DecisionUndoResponse": {
+        "properties": {
+          "decision_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Decision Id",
+            "description": "Reverted decision ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "undone"
+            ],
+            "title": "Status",
+            "description": "Updated status: undone",
+            "default": "undone"
+          },
+          "undone_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Undone At",
+            "description": "UTC timestamp when the undo was recorded"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status summary confirming reversal"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision_id",
+          "undone_at",
+          "message"
+        ],
+        "title": "DecisionUndoResponse",
+        "description": "Result of reverting a previously committed decision."
+      },
+      "ErrorDetail": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Unique machine-readable error identifier"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable explanation of the error"
+          },
+          "details": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details",
+            "description": "Optional structured context, field validation errors, or debugging metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorDetail",
+        "description": "Inner error payload with code, explanation, and optional context details."
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "description": "Standard envelope for all HTTP 4xx and 5xx API error responses."
+      },
+      "FindingDecisionCreate": {
+        "properties": {
+          "action_type": {
+            "type": "string",
+            "enum": [
+              "drop_row",
+              "impute",
+              "replace",
+              "transform",
+              "ignore"
+            ],
+            "title": "Action Type",
+            "description": "Resolution strategy chosen: drop_row, impute, replace, transform, ignore"
+          },
+          "custom_parameters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Custom Parameters",
+            "description": "Parameters for the remediation action (e.g., replacement value, strategy)"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Optional reviewer commentary or reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action_type"
+        ],
+        "title": "FindingDecisionCreate",
+        "description": "User submission to resolve a specific finding."
+      },
+      "FindingDecisionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique decision record identifier"
+          },
+          "finding_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Finding Id",
+            "description": "Target finding ID"
+          },
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "Associated run ID"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id",
+            "description": "ID of the user who made the decision"
+          },
+          "action_type": {
+            "type": "string",
+            "enum": [
+              "drop_row",
+              "impute",
+              "replace",
+              "transform",
+              "ignore"
+            ],
+            "title": "Action Type",
+            "description": "Action taken"
+          },
+          "parameters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Parameters",
+            "description": "Resolved execution parameters"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "undone"
+            ],
+            "title": "Status",
+            "description": "Status: applied or undone",
+            "default": "applied"
+          },
+          "decided_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Decided At",
+            "description": "UTC timestamp of the decision"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "finding_id",
+          "run_id",
+          "user_id",
+          "action_type",
+          "decided_at"
+        ],
+        "title": "FindingDecisionResponse",
+        "description": "Result of an applied remediation decision."
+      },
+      "FindingListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FindingResponse"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "List of findings"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total count matching filter criteria"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Page limit applied",
+            "default": 50
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "Page offset applied",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "total"
+        ],
+        "title": "FindingListResponse",
+        "description": "Paginated collection of run findings."
+      },
+      "FindingResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique finding identifier"
+          },
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "Associated run ID"
+          },
+          "row_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row Index",
+            "description": "Zero-based row index in dataset, if row-specific"
+          },
+          "column_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column Name",
+            "description": "Target column affected, if column-specific"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "missing_value",
+              "outlier",
+              "type_mismatch",
+              "duplicate",
+              "format_inconsistency",
+              "business_rule_violation"
+            ],
+            "title": "Category",
+            "description": "Categorization of the data quality anomaly"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "title": "Severity",
+            "description": "Impact level: low, medium, high, critical"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Human-readable summary of the detected problem"
+          },
+          "affected_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Value",
+            "description": "Sample or string representation of the offending raw value"
+          },
+          "suggested_action": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SuggestedAction"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Suggested resolution action"
+          },
+          "is_resolved": {
+            "type": "boolean",
+            "title": "Is Resolved",
+            "description": "Whether a decision has already been committed for this finding",
+            "default": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Timestamp when finding was detected"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "run_id",
+          "category",
+          "severity",
+          "description",
+          "created_at"
+        ],
+        "title": "FindingResponse",
+        "description": "Detailed representation of an individual detected anomaly."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Application health status",
+            "default": "healthy"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Application semantic version"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Current UTC timestamp of the server"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "timestamp"
+        ],
+        "title": "HealthResponse",
+        "description": "Health status response payload."
+      },
+      "ProjectCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Display name of the project"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Optional project description"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id",
+            "description": "Target workspace ID owning this project"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "workspace_id"
+        ],
+        "title": "ProjectCreate",
+        "description": "Payload to create a new project within a workspace."
+      },
+      "ProjectListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectResponse"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "List of projects"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total number of projects matching query"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total"
+        ],
+        "title": "ProjectListResponse",
+        "description": "Paginated or listed collection of projects."
+      },
+      "ProjectResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique project ID"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id",
+            "description": "ID of the owning workspace"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Project name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Project description"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp in UTC"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last modification timestamp in UTC"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ProjectResponse",
+        "description": "Response schema representing an AgentIQ project."
+      },
+      "RunAuditResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "Target run ID"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEventResponse"
+            },
+            "type": "array",
+            "title": "Events",
+            "description": "Chronological audit records"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total audit events recorded"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "total"
+        ],
+        "title": "RunAuditResponse",
+        "description": "Chronological collection of audit events for a run."
+      },
+      "RunCompareResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "Associated run ID"
+          },
+          "original_rows_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Original Rows Count",
+            "description": "Row count in raw file"
+          },
+          "cleaned_rows_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Cleaned Rows Count",
+            "description": "Row count in cleaned state"
+          },
+          "columns_diff": {
+            "items": {
+              "$ref": "#/components/schemas/ColumnDiff"
+            },
+            "type": "array",
+            "title": "Columns Diff",
+            "description": "Per-column diff statistics"
+          },
+          "preview_original": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Preview Original",
+            "description": "Top N sample rows from original raw data"
+          },
+          "preview_cleaned": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Preview Cleaned",
+            "description": "Top N sample rows from cleaned data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "original_rows_count",
+          "cleaned_rows_count"
+        ],
+        "title": "RunCompareResponse",
+        "description": "Side-by-side comparison payload comparing raw vs cleaned data."
+      },
+      "RunConfig": {
+        "properties": {
+          "enable_ai_explanations": {
+            "type": "boolean",
+            "title": "Enable Ai Explanations",
+            "description": "Whether to invoke AI provider for natural language explanations",
+            "default": true
+          },
+          "sample_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Size",
+            "description": "Optional limit on row count for profiling sampling"
+          },
+          "anomaly_threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Anomaly Threshold",
+            "description": "Confidence threshold for anomaly detection",
+            "default": 0.8
+          },
+          "parameters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Parameters",
+            "description": "Arbitrary engine tuning parameters"
+          }
+        },
+        "type": "object",
+        "title": "RunConfig",
+        "description": "Optional execution configuration overrides for a cleaning run."
+      },
+      "RunCreate": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id",
+            "description": "Target project ID"
+          },
+          "upload_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Upload Id",
+            "description": "ID of the uploaded dataset file to process"
+          },
+          "config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunConfig"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional run configuration"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "upload_id"
+        ],
+        "title": "RunCreate",
+        "description": "Payload to trigger an analysis and cleaning pipeline run."
+      },
+      "RunExportCreate": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "parquet",
+              "excel"
+            ],
+            "title": "Format",
+            "description": "Target file format: csv, parquet, excel",
+            "default": "csv"
+          },
+          "include_cleaned_only": {
+            "type": "boolean",
+            "title": "Include Cleaned Only",
+            "description": "When true, exports only rows that passed or were remediated",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "RunExportCreate",
+        "description": "Configuration payload to generate a downloadable export."
+      },
+      "RunExportResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique export identifier"
+          },
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "Associated run ID"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "parquet",
+              "excel"
+            ],
+            "title": "Format",
+            "description": "Generated file format"
+          },
+          "file_size_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "File Size Bytes",
+            "description": "Size of generated export file in bytes"
+          },
+          "download_url": {
+            "type": "string",
+            "title": "Download Url",
+            "description": "Temporary or signed URL for dataset download"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At",
+            "description": "Expiration timestamp for the download URL in UTC"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Export generation timestamp in UTC"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "run_id",
+          "format",
+          "file_size_bytes",
+          "download_url",
+          "expires_at",
+          "created_at"
+        ],
+        "title": "RunExportResponse",
+        "description": "Response containing signed/temporary download link for the exported dataset."
+      },
+      "RunProgress": {
+        "properties": {
+          "current_stage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "reading",
+                  "detecting",
+                  "grouping",
+                  "explaining",
+                  "summarizing"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Stage",
+            "description": "Active processing stage: reading, detecting, grouping, explaining, summarizing"
+          },
+          "stage_percent": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Stage Percent",
+            "description": "Completion percentage of the active stage (0-100)",
+            "default": 0
+          },
+          "total_percent": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Total Percent",
+            "description": "Overall run completion percentage (0-100)",
+            "default": 0
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable status or telemetry log snippet"
+          }
+        },
+        "type": "object",
+        "title": "RunProgress",
+        "description": "Real-time progress telemetry designed for two-second polling intervals."
+      },
+      "RunResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique run identifier"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id",
+            "description": "Associated project ID"
+          },
+          "upload_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Upload Id",
+            "description": "Target upload dataset ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "processing",
+              "completed",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "description": "Current status: queued, processing, completed, failed, cancelled"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "reading",
+                  "detecting",
+                  "grouping",
+                  "explaining",
+                  "summarizing"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage",
+            "description": "Current stage if processing"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/RunProgress",
+            "description": "Progress percentage and telemetry"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "UTC timestamp when processing began"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "UTC timestamp when run ended"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message",
+            "description": "Failure reason if status is failed"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Run dispatch timestamp in UTC"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "project_id",
+          "upload_id",
+          "status",
+          "created_at"
+        ],
+        "title": "RunResponse",
+        "description": "Response schema for run lifecycle and status tracking."
+      },
+      "RunSummaryResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "Associated run ID"
+          },
+          "total_rows": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Rows",
+            "description": "Total rows in the source dataset"
+          },
+          "total_columns": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Columns",
+            "description": "Total columns profiled"
+          },
+          "dirty_rows": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Dirty Rows",
+            "description": "Number of rows with at least one detected anomaly"
+          },
+          "clean_rows": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Clean Rows",
+            "description": "Number of pristine rows"
+          },
+          "total_findings": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Findings",
+            "description": "Total number of distinct anomalies detected"
+          },
+          "findings_by_severity": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Findings By Severity",
+            "description": "Counts broken down by severity: low, medium, high, critical"
+          },
+          "findings_by_category": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Findings By Category",
+            "description": "Counts broken down by category"
+          },
+          "estimated_quality_score": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Estimated Quality Score",
+            "description": "Calculated data quality score (0.0 - 100.0)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "total_rows",
+          "total_columns",
+          "dirty_rows",
+          "clean_rows",
+          "total_findings",
+          "estimated_quality_score"
+        ],
+        "title": "RunSummaryResponse",
+        "description": "High-level statistical and metric summary produced once a run completes."
+      },
+      "SuggestedAction": {
+        "properties": {
+          "action_type": {
+            "type": "string",
+            "enum": [
+              "drop_row",
+              "impute",
+              "replace",
+              "transform",
+              "ignore"
+            ],
+            "title": "Action Type",
+            "description": "Recommended remediation: drop_row, impute, replace, transform, ignore"
+          },
+          "parameters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Parameters",
+            "description": "Concrete parameters needed to execute the fix"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale",
+            "description": "Explanation or AI generated reasoning for why this action is recommended"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action_type"
+        ],
+        "title": "SuggestedAction",
+        "description": "Machine or AI recommended remediation for a data quality issue."
+      },
+      "UploadResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique upload identifier"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id",
+            "description": "Associated project ID"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename",
+            "description": "Original filename of the uploaded file"
+          },
+          "file_size_bytes": {
+            "type": "integer",
+            "title": "File Size Bytes",
+            "description": "Size of uploaded file in bytes"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "Detected MIME type (e.g. text/csv, application/vnd.apache.parquet)"
+          },
+          "row_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row Count",
+            "description": "Pre-computed row count if available during upload"
+          },
+          "column_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column Count",
+            "description": "Pre-computed column count if available"
+          },
+          "storage_path": {
+            "type": "string",
+            "title": "Storage Path",
+            "description": "Internal preserved storage path for raw data"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Upload timestamp in UTC"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "project_id",
+          "filename",
+          "file_size_bytes",
+          "mime_type",
+          "storage_path",
+          "created_at"
+        ],
+        "title": "UploadResponse",
+        "description": "Response schema following successful file upload."
+      },
+      "UserResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Supabase Auth UUID of the user"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "User's email address"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name",
+            "description": "User's display or full name"
+          },
+          "workspaces": {
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceMembership"
+            },
+            "type": "array",
+            "title": "Workspaces",
+            "description": "List of workspaces accessible to the user"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Account creation timestamp in UTC"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "created_at"
+        ],
+        "title": "UserResponse",
+        "description": "Response schema for authenticated user identity and workspace memberships."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WorkspaceMembership": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id",
+            "description": "Unique workspace ID"
+          },
+          "workspace_name": {
+            "type": "string",
+            "title": "Workspace Name",
+            "description": "Human-readable name of the workspace"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "reviewer",
+              "viewer"
+            ],
+            "title": "Role",
+            "description": "Role permissions: admin, reviewer, or viewer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "workspace_name",
+          "role"
+        ],
+        "title": "WorkspaceMembership",
+        "description": "Represents a user's membership and assigned role within a workspace."
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
