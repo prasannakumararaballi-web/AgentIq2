@@ -66,6 +66,8 @@ Common error codes:
 | `GET` | `/api/v1/runs/{run_id}/compare` | Bearer Token | `admin`, `reviewer`, `viewer` | Side-by-side diff (raw vs cleaned) |
 | `GET` | `/api/v1/runs/{run_id}/audit` | Bearer Token | `admin`, `reviewer`, `viewer` | Immutable chronological audit trail |
 | `POST` | `/api/v1/runs/{run_id}/exports` | Bearer Token | `admin`, `reviewer` | Generate downloadable cleaned dataset |
+| `GET` | `/api/v1/workspaces/{workspace_id}/members` | Bearer Token | `admin`, `reviewer`, `viewer` | List members and roles in workspace |
+| `POST` | `/api/v1/workspaces/{workspace_id}/members` | Bearer Token | `admin` | Add or invite member with assigned role |
 
 ---
 
@@ -447,6 +449,54 @@ Common error codes:
   "file_size_bytes": 1048576,
   "download_url": "/api/v1/downloads/88888888-8888-8888-8888-888888888888.parquet",
   "expires_at": "2026-11-12T12:00:00Z",
+  "created_at": "2026-11-11T12:00:00Z"
+}
+```
+
+---
+
+### 3.15 `GET /api/v1/workspaces/{workspace_id}/members`
+- **Summary:** List Workspace Members
+- **Headers:** `X-Workspace-ID: <uuid>`, `Authorization: Bearer <token>`
+- **Permissions:** `viewer` or higher in target workspace
+- **Response `200 OK`:**
+```json
+{
+  "items": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000001",
+      "user_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+      "role": "admin",
+      "user_email": "admin@example.com",
+      "created_at": "2026-11-11T10:00:00Z"
+    }
+  ],
+  "total": 1
+}
+```
+
+---
+
+### 3.16 `POST /api/v1/workspaces/{workspace_id}/members`
+- **Summary:** Add Workspace Member
+- **Headers:** `X-Workspace-ID: <uuid>`, `Authorization: Bearer <token>`
+- **Permissions:** `admin` only
+- **Request Body:**
+```json
+{
+  "user_id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+  "role": "reviewer"
+}
+```
+- **Response `201 Created`:**
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000002",
+  "workspace_id": "00000000-0000-0000-0000-000000000001",
+  "user_id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+  "role": "reviewer",
+  "user_email": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e@supabase.auth",
   "created_at": "2026-11-11T12:00:00Z"
 }
 ```

@@ -19,10 +19,12 @@ REQUIRED_OPERATIONS = [
     ("GET", "/api/v1/runs/{run_id}/compare"),
     ("GET", "/api/v1/runs/{run_id}/audit"),
     ("POST", "/api/v1/runs/{run_id}/exports"),
+    ("GET", "/api/v1/workspaces/{workspace_id}/members"),
+    ("POST", "/api/v1/workspaces/{workspace_id}/members"),
 ]
 
 
-def test_openapi_schema_contains_all_14_endpoints():
+def test_openapi_schema_contains_all_endpoints():
     schema = app.openapi()
     paths = schema.get("paths", {})
 

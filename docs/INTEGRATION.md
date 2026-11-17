@@ -29,10 +29,17 @@ const headers = {
 ```
 
 ### 2.2 Server-Side Authorization & Roles
-The backend enforces role-based access control (RBAC). The user's role is resolved directly from their verified Supabase session:
-- **`admin`**: Full access (project creation, settings, run triggers, reviews, exports).
+The backend enforces role-based access control (RBAC). The user's role is resolved directly from their verified Supabase session and database membership record:
+- **`admin`**: Full access (manage workspace members, project creation, settings, run triggers, reviews, exports).
 - **`reviewer`**: Can upload datasets, trigger runs, submit finding decisions, and request exports.
 - **`viewer`**: Read-only access (view summary, progress, findings, audit trail, diffs).
+
+### 2.3 Strict Tenant Isolation & IDOR Prevention
+Every request must specify the active workspace in the `X-Workspace-ID` header.
+- The server cryptographically validates the token.
+- It cross-references `X-Workspace-ID` against the user's database membership records.
+- All resource queries (projects, uploads, runs, findings, decisions, audit logs) filter explicitly on `workspace_id`.
+- Requesting a resource belonging to another workspace (even if guessing the UUID) returns an HTTP 404 (preventing Insecure Direct Object References).
 
 If a user lacks permission for an action, the backend responds with HTTP 403:
 ```json

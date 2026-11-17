@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: agentiq-api
+    runtime: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: CORS_ORIGINS
+        value: "https://*,http://localhost:3000"
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:////app/storage/agentiq.db
+      - key: DIRECT_DATABASE_URL
+        value: sqlite:////app/storage/agentiq.db
+      - key: SUPABASE_JWT_SECRET
+        generateValue: true
+      - key: STORAGE_BACKEND
+        value: local
+      - key: LOCAL_STORAGE_PATH
+        value: /app/storage

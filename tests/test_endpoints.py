@@ -1,8 +1,17 @@
-"""Integration tests for all 14 API endpoints, RBAC, and error handlers."""
+"""Integration tests for all API endpoints, RBAC, and error handlers."""
 
 from io import BytesIO
 from uuid import uuid4
 from fastapi.testclient import TestClient
+from tests.conftest import (
+    ADMIN_USER_ID,
+    DECISION_A_ID,
+    FINDING_A_ID,
+    PROJECT_A_ID,
+    RUN_A_ID,
+    UPLOAD_A_ID,
+    WORKSPACE_A_ID,
+)
 
 
 def test_auth_me_without_token_returns_401(client: TestClient):
@@ -11,15 +20,16 @@ def test_auth_me_without_token_returns_401(client: TestClient):
     data = response.json()
     assert "error" in data
     assert data["error"]["code"] == "UNAUTHORIZED"
-    assert "Authorization" in data["error"]["message"]
+    assert "Missing" in data["error"]["message"]
 
 
 def test_auth_me_with_valid_token_returns_user(client: TestClient, auth_headers: dict[str, str]):
     response = client.get("/api/v1/auth/me", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
-    assert data["email"] == "developer@example.com"
+    assert data["email"] == "admin@example.com"
     assert len(data["workspaces"]) > 0
+    assert data["workspaces"][0]["workspace_id"] == str(WORKSPACE_A_ID)
 
 
 def test_projects_endpoints(client: TestClient, auth_headers: dict[str, str]):
@@ -47,7 +57,7 @@ def test_upload_endpoint(client: TestClient, auth_headers: dict[str, str]):
     res = client.post(
         "/api/v1/uploads",
         headers={"Authorization": auth_headers["Authorization"], "X-Workspace-ID": auth_headers["X-Workspace-ID"]},
-        data={"project_id": str(uuid4())},
+        data={"project_id": str(PROJECT_A_ID)},
         files={"file": ("dataset.csv", BytesIO(file_content), "text/csv")},
     )
     assert res.status_code == 201
@@ -60,7 +70,7 @@ def test_upload_invalid_extension_returns_400(client: TestClient, auth_headers: 
     res = client.post(
         "/api/v1/uploads",
         headers={"Authorization": auth_headers["Authorization"], "X-Workspace-ID": auth_headers["X-Workspace-ID"]},
-        data={"project_id": str(uuid4())},
+        data={"project_id": str(PROJECT_A_ID)},
         files={"file": ("malicious.exe", BytesIO(b"MZ..."), "application/octet-stream")},
     )
     assert res.status_code == 400
@@ -70,14 +80,11 @@ def test_upload_invalid_extension_returns_400(client: TestClient, auth_headers: 
 
 
 def test_runs_lifecycle_and_auxiliary_endpoints(client: TestClient, auth_headers: dict[str, str]):
-    proj_id = str(uuid4())
-    upload_id = str(uuid4())
-
     # 1. Trigger Run (POST /api/v1/runs)
     res_run = client.post(
         "/api/v1/runs",
         headers=auth_headers,
-        json={"project_id": proj_id, "upload_id": upload_id},
+        json={"project_id": str(PROJECT_A_ID), "upload_id": str(UPLOAD_A_ID)},
     )
     assert res_run.status_code == 202
     run_id = res_run.json()["id"]
@@ -98,9 +105,8 @@ def test_runs_lifecycle_and_auxiliary_endpoints(client: TestClient, auth_headers
     assert "items" in res_findings.json()
 
     # 5. Submit Decision (POST /api/v1/findings/{finding_id}/decisions)
-    finding_id = str(uuid4())
     res_dec = client.post(
-        f"/api/v1/findings/{finding_id}/decisions",
+        f"/api/v1/findings/{FINDING_A_ID}/decisions",
         headers=auth_headers,
         json={
             "action_type": "replace",

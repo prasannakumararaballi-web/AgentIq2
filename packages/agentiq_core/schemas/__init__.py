@@ -6,6 +6,9 @@ from agentiq_core.schemas.health import HealthResponse
 from agentiq_core.schemas.auth import (
     WorkspaceRole,
     WorkspaceMembership,
+    WorkspaceMemberCreate,
+    WorkspaceMemberResponse,
+    WorkspaceMemberListResponse,
     UserResponse,
 )
 from agentiq_core.schemas.project import (
@@ -49,6 +52,9 @@ __all__ = [
     "HealthResponse",
     "WorkspaceRole",
     "WorkspaceMembership",
+    "WorkspaceMemberCreate",
+    "WorkspaceMemberResponse",
+    "WorkspaceMemberListResponse",
     "UserResponse",
     "ProjectCreate",
     "ProjectResponse",

@@ -55,6 +55,34 @@ class FindingResponse(AgentIQBaseModel):
     is_resolved: bool = Field(
         default=False, description="Whether a decision has already been committed for this finding"
     )
+    # Card-level aggregation & risk tier extensions (Phase 2)
+    issue_title: Optional[str] = Field(
+        default=None, description="Human-readable title for card-level grouped anomaly"
+    )
+    affected_row_count: int = Field(
+        default=1, description="Total count of rows affected across dataset"
+    )
+    affected_row_indices: list[int] = Field(
+        default_factory=list, description="Bounded sample list of affected row indices (max 50)"
+    )
+    confidence: float = Field(
+        default=1.0, ge=0.0, le=1.0, description="Evidence-based detection confidence"
+    )
+    risk_tier: int = Field(
+        default=1, ge=0, le=3, description="Conservative remediation risk tier (0=safe, 1=low, 2=medium, 3=high)"
+    )
+    impact_estimate: float = Field(
+        default=0.0, ge=0.0, le=1.0, description="Estimated proportion of dataset affected"
+    )
+    sample_before: list[dict[str, Any]] = Field(
+        default_factory=list, description="Sample preview of values before remediation"
+    )
+    sample_after: list[dict[str, Any]] = Field(
+        default_factory=list, description="Sample preview of values after remediation"
+    )
+    detection_rule: Optional[str] = Field(
+        default=None, description="Identifier of the rule or heuristic that detected this issue"
+    )
     created_at: datetime = Field(..., description="Timestamp when finding was detected")
 
 

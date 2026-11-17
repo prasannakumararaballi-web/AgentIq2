@@ -47,15 +47,27 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
-# Local storage and sensitive data
+# Local storage, databases and sensitive data
 storage/*
 !storage/.gitkeep
+!storage/demo/demo_customers_1000.csv
+!storage/demo/demo_ground_truth.json
 .env
 .env.local
+.env.*.local
 *.log
+*.db
+*.sqlite
+*.sqlite3
+test_migration.db
 
-# Node (for client generation or frontend tools if any in repo)
+# Node & Next.js
 node_modules/
+.next/
+apps/web/.next/
+out/
+build/
+dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

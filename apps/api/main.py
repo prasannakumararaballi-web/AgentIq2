@@ -7,11 +7,13 @@ from apps.api.middleware.error_handler import register_error_handlers
 from apps.api.routers import (
     auth_router,
     decisions_router,
+    downloads_router,
     findings_router,
     health_router,
     projects_router,
     runs_router,
     uploads_router,
+    workspaces_router,
 )
 
 
@@ -52,6 +54,8 @@ def create_app() -> FastAPI:
     app.include_router(runs_router, prefix=settings.api_v1_prefix)
     app.include_router(findings_router, prefix=settings.api_v1_prefix)
     app.include_router(decisions_router, prefix=settings.api_v1_prefix)
+    app.include_router(workspaces_router, prefix=settings.api_v1_prefix)
+    app.include_router(downloads_router, prefix=settings.api_v1_prefix)
 
     return app
 

@@ -12,8 +12,8 @@ paths:
       tags:
       - Health
       summary: Service Health Check
-      description: Returns service availability, active version, and current server
-        UTC timestamp.
+      description: Returns service availability, active version, current server UTC
+        timestamp, and database connectivity.
       operationId: check_health_health_get
       responses:
         '200':
@@ -138,7 +138,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProjectResponse'
         '400':
-          description: Invalid payload
+          description: Invalid payload or duplicate name
           content:
             application/json:
               schema:
@@ -166,8 +166,8 @@ paths:
       tags:
       - Uploads
       summary: Upload Dataset File
-      description: Upload raw dataset file via multipart/form-data with file validation
-        and original preservation.
+      description: Upload raw dataset file via multipart/form-data with streaming
+        validation, SHA-256 hashing, and metadata introspection.
       operationId: upload_file_api_v1_uploads_post
       security:
       - HTTPBearer: []
@@ -195,7 +195,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/UploadResponse'
         '400':
-          description: Invalid file type or format
+          description: Invalid file type, empty file, or corrupt tabular format
           content:
             application/json:
               schema:
@@ -212,8 +212,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project not found in active workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '413':
-          description: File exceeds allowed size limit
+          description: File exceeds allowed size limit (100MB)
           content:
             application/json:
               schema:
@@ -229,12 +235,21 @@ paths:
       tags:
       - Runs
       summary: Trigger Execution Run
-      description: Enqueue an asynchronous data profiling and AI-assisted anomaly
-        detection run.
+      description: Enqueue or synchronously execute a real tabular data profiling
+        run within the active workspace.
       operationId: create_run_api_v1_runs_post
       security:
       - HTTPBearer: []
       parameters:
+      - name: sync
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Execute analysis synchronously (stage demonstration mode)
+          default: true
+          title: Sync
+        description: Execute analysis synchronously (stage demonstration mode)
       - name: X-Workspace-ID
         in: header
         required: true
@@ -275,6 +290,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project or upload not found in active workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Validation Error
           content:
@@ -288,7 +309,7 @@ paths:
       summary: Get Run Status & Progress
       description: 'Poll current execution status and stage progress (recommended
         poll interval: 2 seconds).'
-      operationId: get_run_api_v1_runs__run_id__get
+      operationId: get_run_status_api_v1_runs__run_id__get
       security:
       - HTTPBearer: []
       parameters:
@@ -328,7 +349,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Run not found
+          description: Run not found in active workspace
           content:
             application/json:
               schema:
@@ -386,7 +407,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Run not found
+          description: Run not found in active workspace
           content:
             application/json:
               schema:
@@ -447,6 +468,18 @@ paths:
           description: Filter by severity
           title: Severity
         description: Filter by severity
+      - name: risk_tier
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            maximum: 3
+            minimum: 0
+          - type: 'null'
+          description: Filter by risk tier (0-3)
+          title: Risk Tier
+        description: Filter by risk tier (0-3)
       - name: limit
         in: query
         required: false
@@ -493,7 +526,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Run not found
+          description: Run not found in active workspace
           content:
             application/json:
               schema:
@@ -551,7 +584,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Run not found
+          description: Run not found in active workspace
           content:
             application/json:
               schema:
@@ -609,7 +642,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Run not found
+          description: Run not found in active workspace
           content:
             application/json:
               schema:
@@ -679,7 +712,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Run not found
+          description: Run not found in active workspace
           content:
             application/json:
               schema:
@@ -749,7 +782,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Finding not found
+          description: Finding not found in active workspace
           content:
             application/json:
               schema:
@@ -795,7 +828,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/DecisionUndoResponse'
         '400':
-          description: Decision cannot be reverted
+          description: Decision already undone
           content:
             application/json:
               schema:
@@ -813,7 +846,218 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Decision not found
+          description: Decision not found in active workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/workspaces/{workspace_id}/members:
+    get:
+      tags:
+      - Workspaces
+      summary: List Workspace Members
+      description: Retrieve all members and their roles within the target workspace.
+      operationId: list_workspace_members_api_v1_workspaces__workspace_id__members_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workspace Id
+      - name: X-Workspace-ID
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Authoritative active workspace ID header
+          title: X-Workspace-Id
+        description: Authoritative active workspace ID header
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMemberListResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient workspace permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Workspaces
+      summary: Add Workspace Member
+      description: Assign a user to a workspace with a specified RBAC role (Admin
+        only).
+      operationId: add_workspace_member_api_v1_workspaces__workspace_id__members_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workspace Id
+      - name: X-Workspace-ID
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Authoritative active workspace ID header
+          title: X-Workspace-Id
+        description: Authoritative active workspace ID header
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceMemberCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMemberResponse'
+        '400':
+          description: User already member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient workspace permissions (Requires Admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/downloads/{filename}:
+    get:
+      tags:
+      - Downloads
+      summary: Download Cleaned Dataset Export
+      description: Stream a generated cleaned dataset export with strict tenant authorization
+        and traversal protection.
+      operationId: download_export_file_api_v1_downloads__filename__get
+      parameters:
+      - name: filename
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Filename
+      - name: token
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional JWT query param for direct browser download links
+          title: Token
+        description: Optional JWT query param for direct browser download links
+      - name: workspace_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional workspace ID query param
+          title: Workspace Id
+        description: Optional workspace ID query param
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Bearer JWT header
+          title: Authorization
+        description: Bearer JWT header
+      - name: X-Workspace-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Workspace ID header
+          title: X-Workspace-Id
+        description: Workspace ID header
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Invalid download filename format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Missing or invalid authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: User does not have access to this workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Export not found in active workspace
           content:
             application/json:
               schema:
@@ -872,7 +1116,7 @@ components:
           type: string
           contentMediaType: application/octet-stream
           title: File
-          description: Raw dataset file (.csv, .parquet, .xlsx, .json)
+          description: Raw dataset file (.csv, .tsv, .parquet, .xlsx)
         project_id:
           type: string
           format: uuid
@@ -1158,6 +1402,65 @@ components:
           title: Is Resolved
           description: Whether a decision has already been committed for this finding
           default: false
+        issue_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Issue Title
+          description: Human-readable title for card-level grouped anomaly
+        affected_row_count:
+          type: integer
+          title: Affected Row Count
+          description: Total count of rows affected across dataset
+          default: 1
+        affected_row_indices:
+          items:
+            type: integer
+          type: array
+          title: Affected Row Indices
+          description: Bounded sample list of affected row indices (max 50)
+        confidence:
+          type: number
+          maximum: 1.0
+          minimum: 0.0
+          title: Confidence
+          description: Evidence-based detection confidence
+          default: 1.0
+        risk_tier:
+          type: integer
+          maximum: 3.0
+          minimum: 0.0
+          title: Risk Tier
+          description: Conservative remediation risk tier (0=safe, 1=low, 2=medium,
+            3=high)
+          default: 1
+        impact_estimate:
+          type: number
+          maximum: 1.0
+          minimum: 0.0
+          title: Impact Estimate
+          description: Estimated proportion of dataset affected
+          default: 0.0
+        sample_before:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Sample Before
+          description: Sample preview of values before remediation
+        sample_after:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Sample After
+          description: Sample preview of values after remediation
+        detection_rule:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detection Rule
+          description: Identifier of the rule or heuristic that detected this issue
         created_at:
           type: string
           format: date-time
@@ -1198,6 +1501,12 @@ components:
           format: date-time
           title: Timestamp
           description: Current UTC timestamp of the server
+        database:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Database
+          description: Database connection health status
       type: object
       required:
       - version
@@ -1705,22 +2014,56 @@ components:
           type: string
           title: Mime Type
           description: Detected MIME type (e.g. text/csv, application/vnd.apache.parquet)
+        file_hash:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: File Hash
+          description: SHA-256 cryptographic digest of the raw uploaded file
         row_count:
           anyOf:
           - type: integer
           - type: 'null'
           title: Row Count
-          description: Pre-computed row count if available during upload
+          description: Introspected total row count
         column_count:
           anyOf:
           - type: integer
           - type: 'null'
           title: Column Count
-          description: Pre-computed column count if available
+          description: Introspected total column count
+        columns:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Columns
+          description: Introspected column headers (deduplicated)
+        sheet_names:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Sheet Names
+          description: Discovered sheet names for Excel workbooks
+        detected_encoding:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detected Encoding
+          description: Detected text character encoding
+        warnings:
+          items:
+            type: string
+          type: array
+          title: Warnings
+          description: Parser warnings (e.g. duplicate headers renamed)
         storage_path:
           type: string
           title: Storage Path
-          description: Internal preserved storage path for raw data
+          description: Internal preserved storage key for raw data
         created_at:
           type: string
           format: date-time
@@ -1799,6 +2142,89 @@ components:
       - msg
       - type
       title: ValidationError
+    WorkspaceMemberCreate:
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          title: User Id
+          description: Supabase user ID to associate with workspace
+        role:
+          type: string
+          enum:
+          - admin
+          - reviewer
+          - viewer
+          title: Role
+          description: 'Role to assign: admin, reviewer, or viewer'
+          default: viewer
+      type: object
+      required:
+      - user_id
+      title: WorkspaceMemberCreate
+      description: Payload for adding or inviting a user to a workspace.
+    WorkspaceMemberListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/WorkspaceMemberResponse'
+          type: array
+          title: Items
+          description: List of members
+        total:
+          type: integer
+          title: Total
+          description: Total members in workspace
+      type: object
+      required:
+      - total
+      title: WorkspaceMemberListResponse
+      description: Collection of members in a workspace.
+    WorkspaceMemberResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+          description: Membership record unique ID
+        workspace_id:
+          type: string
+          format: uuid
+          title: Workspace Id
+          description: Target workspace ID
+        user_id:
+          type: string
+          format: uuid
+          title: User Id
+          description: Member user ID
+        role:
+          type: string
+          enum:
+          - admin
+          - reviewer
+          - viewer
+          title: Role
+          description: 'Assigned role: admin, reviewer, or viewer'
+        user_email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User Email
+          description: Email address of the member user
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Membership assignment timestamp in UTC
+      type: object
+      required:
+      - id
+      - workspace_id
+      - user_id
+      - role
+      - created_at
+      title: WorkspaceMemberResponse
+      description: Response representing a workspace membership record.
     WorkspaceMembership:
       properties:
         workspace_id:

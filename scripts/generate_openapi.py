@@ -29,6 +29,8 @@ REQUIRED_OPERATIONS = [
     ("GET", "/api/v1/runs/{run_id}/compare"),
     ("GET", "/api/v1/runs/{run_id}/audit"),
     ("POST", "/api/v1/runs/{run_id}/exports"),
+    ("GET", "/api/v1/workspaces/{workspace_id}/members"),
+    ("POST", "/api/v1/workspaces/{workspace_id}/members"),
 ]
 
 

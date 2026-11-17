@@ -2,11 +2,13 @@
 
 from apps.api.routers.auth import router as auth_router
 from apps.api.routers.decisions import router as decisions_router
+from apps.api.routers.downloads import router as downloads_router
 from apps.api.routers.findings import router as findings_router
 from apps.api.routers.health import router as health_router
 from apps.api.routers.projects import router as projects_router
 from apps.api.routers.runs import router as runs_router
 from apps.api.routers.uploads import router as uploads_router
+from apps.api.routers.workspaces import router as workspaces_router
 
 __all__ = [
     "health_router",
@@ -16,5 +18,7 @@ __all__ = [
     "runs_router",
     "findings_router",
     "decisions_router",
+    "workspaces_router",
+    "downloads_router",
 ]
 
