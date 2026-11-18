@@ -48,10 +48,12 @@ htmlcov/
 .ruff_cache/
 
 # Local storage, databases and sensitive data
-storage/*
+storage/raw/*
+!storage/raw/.gitkeep
+storage/exports/*
+!storage/exports/.gitkeep
+!storage/demo/
 !storage/.gitkeep
-!storage/demo/demo_customers_1000.csv
-!storage/demo/demo_ground_truth.json
 .env
 .env.local
 .env.*.local

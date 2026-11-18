@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency specifications
-COPY requirements.txt pyproject.toml ./
+COPY requirements.txt pyproject.toml README.md ./
 COPY packages ./packages
 COPY apps ./apps
 
