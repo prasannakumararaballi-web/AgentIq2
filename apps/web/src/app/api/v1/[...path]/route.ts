@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const TARGET_API_URL =
   process.env.BACKEND_API_URL ||
-  "https://salty-foxes-win.loca.lt/api/v1";
+  "https://agentiq-demo-api.loca.lt/api/v1";
 
 async function proxyRequest(
   req: NextRequest,

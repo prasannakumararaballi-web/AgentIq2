@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 const TARGET_API_URL =
   process.env.BACKEND_API_URL ||
-  "https://salty-foxes-win.loca.lt";
+  "https://agentiq-demo-api.loca.lt";
 
 export async function GET() {
   const cleanBase = TARGET_API_URL.replace(/\/api\/v1\/?$/, "");
