@@ -10,25 +10,28 @@ const CANDIDATES = [
 ].filter(Boolean) as string[];
 
 export async function GET() {
+  const errors: string[] = [];
   for (const base of CANDIDATES) {
     const cleanBase = base.replace(/\/api\/v1\/?$/, "");
     try {
       const res = await fetch(`${cleanBase}/health`, {
         headers: { "Bypass-Tunnel-Reminder": "true" },
         cache: "no-store",
-        signal: AbortSignal.timeout(4000),
+        signal: AbortSignal.timeout(15000),
       });
       if (res.ok) {
         const data = await res.json();
         return NextResponse.json(data, { status: 200 });
+      } else {
+        errors.push(`${cleanBase}: status ${res.status}`);
       }
-    } catch {
-      // try next candidate
+    } catch (err: any) {
+      errors.push(`${cleanBase}: ${err?.name || "Error"} - ${err?.message}`);
     }
   }
 
   return NextResponse.json(
-    { status: "degraded", version: "0.1.0", database: "unreachable" },
+    { status: "degraded", version: "0.1.0", database: "unreachable", errors },
     { status: 502 }
   );
 }
