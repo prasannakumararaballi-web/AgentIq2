@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
+const RAW_TARGET = process.env.BACKEND_API_URL || "";
 const TARGET_API_URL =
-  process.env.BACKEND_API_URL ||
-  "https://agentiq-demo-api.loca.lt";
+  RAW_TARGET && !RAW_TARGET.includes("salty-foxes-win")
+    ? RAW_TARGET
+    : "https://agentiq-demo-api.loca.lt";
 
 export async function GET() {
   const cleanBase = TARGET_API_URL.replace(/\/api\/v1\/?$/, "");
