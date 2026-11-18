@@ -1,23 +1,27 @@
 services:
   - type: web
     name: agentiq-api
-    runtime: docker
-    dockerContext: .
-    dockerfilePath: ./Dockerfile
+    runtime: python
     plan: free
+    buildCommand: pip install -r requirements.txt && alembic upgrade head && python scripts/seed_demo_data.py
+    startCommand: uvicorn apps.api.main:app --host 0.0.0.0 --port $PORT --workers 1
     healthCheckPath: /health
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: PYTHONPATH
+        value: ./:./packages:./apps
       - key: ENVIRONMENT
         value: production
       - key: CORS_ORIGINS
         value: "https://*,http://localhost:3000"
       - key: DATABASE_URL
-        value: sqlite+aiosqlite:////app/storage/agentiq.db
+        value: sqlite+aiosqlite:///storage/agentiq.db
       - key: DIRECT_DATABASE_URL
-        value: sqlite:////app/storage/agentiq.db
+        value: sqlite:///storage/agentiq.db
       - key: SUPABASE_JWT_SECRET
         generateValue: true
       - key: STORAGE_BACKEND
         value: local
       - key: LOCAL_STORAGE_PATH
-        value: /app/storage
+        value: storage
