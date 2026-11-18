@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const RAW_TARGET = process.env.BACKEND_API_URL || "";
 const TARGET_API_URL =
-  RAW_TARGET && !RAW_TARGET.includes("salty-foxes-win")
+  RAW_TARGET && !RAW_TARGET.includes("loca.lt")
     ? RAW_TARGET
-    : "https://agentiq-demo-api.loca.lt/api/v1";
+    : "https://note-logic-herb-program.trycloudflare.com/api/v1";
 
 async function proxyRequest(
   req: NextRequest,
