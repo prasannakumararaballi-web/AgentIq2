@@ -3,11 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const RAW_TARGET = process.env.BACKEND_API_URL || "";
-const TARGET_API_URL =
-  RAW_TARGET && !RAW_TARGET.includes("loca.lt")
-    ? RAW_TARGET
-    : "https://note-logic-herb-program.trycloudflare.com/api/v1";
+const CANDIDATES = [
+  process.env.BACKEND_API_URL,
+  "https://salty-foxes-win.loca.lt",
+  "https://agentiq-demo-api.loca.lt",
+].filter(Boolean) as string[];
 
 async function proxyRequest(
   req: NextRequest,
@@ -16,9 +16,6 @@ async function proxyRequest(
   const { path } = await params;
   const pathStr = path ? path.join("/") : "";
   const searchParams = req.nextUrl.search;
-
-  const cleanBase = TARGET_API_URL.replace(/\/api\/v1\/?$/, "");
-  const targetUrl = `${cleanBase}/api/v1/${pathStr}${searchParams}`;
 
   const headers: Record<string, string> = {
     "Bypass-Tunnel-Reminder": "true",
@@ -33,48 +30,55 @@ async function proxyRequest(
   const contentType = req.headers.get("content-type");
   if (contentType) headers["content-type"] = contentType;
 
-  try {
-    let body: BodyInit | undefined = undefined;
-    if (["POST", "PUT", "PATCH"].includes(req.method)) {
-      body = await req.arrayBuffer();
-    }
-
-    const res = await fetch(targetUrl, {
-      method: req.method,
-      headers,
-      body,
-      cache: "no-store",
-    });
-
-    const resHeaders = new Headers();
-    res.headers.forEach((val, key) => {
-      if (!["content-encoding", "transfer-encoding"].includes(key.toLowerCase())) {
-        resHeaders.set(key, val);
-      }
-    });
-
-    const data = await res.arrayBuffer();
-    return new NextResponse(data, {
-      status: res.status,
-      statusText: res.statusText,
-      headers: resHeaders,
-    });
-  } catch (err: any) {
-    console.error("API proxy error:", err);
-    return NextResponse.json(
-      {
-        error: {
-          code: "PROXY_ERROR",
-          message: err?.message || "Failed to communicate with backend service",
-        },
-      },
-      { status: 502 }
-    );
+  let body: ArrayBuffer | undefined = undefined;
+  if (["POST", "PUT", "PATCH"].includes(req.method)) {
+    body = await req.arrayBuffer();
   }
+
+  for (const base of CANDIDATES) {
+    const cleanBase = base.replace(/\/api\/v1\/?$/, "");
+    const targetUrl = `${cleanBase}/api/v1/${pathStr}${searchParams}`;
+
+    try {
+      const res = await fetch(targetUrl, {
+        method: req.method,
+        headers,
+        body,
+        cache: "no-store",
+        signal: AbortSignal.timeout(10000),
+      });
+
+      const resHeaders = new Headers();
+      res.headers.forEach((val, key) => {
+        if (!["content-encoding", "transfer-encoding"].includes(key.toLowerCase())) {
+          resHeaders.set(key, val);
+        }
+      });
+
+      const data = await res.arrayBuffer();
+      return new NextResponse(data, {
+        status: res.status,
+        statusText: res.statusText,
+        headers: resHeaders,
+      });
+    } catch {
+      // try next candidate
+    }
+  }
+
+  return NextResponse.json(
+    {
+      error: {
+        code: "PROXY_ERROR",
+        message: "Failed to communicate with backend service",
+      },
+    },
+    { status: 502 }
+  );
 }
 
 export const GET = proxyRequest;
 export const POST = proxyRequest;
 export const PUT = proxyRequest;
-export const DELETE = proxyRequest;
 export const PATCH = proxyRequest;
+export const DELETE = proxyRequest;
