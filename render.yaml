@@ -3,14 +3,12 @@ services:
     name: agentiq-api
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt && alembic upgrade head && python scripts/seed_demo_data.py
-    startCommand: uvicorn apps.api.main:app --host 0.0.0.0 --port $PORT --workers 1
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8
-      - key: PYTHONPATH
-        value: ./:./packages:./apps
       - key: ENVIRONMENT
         value: production
       - key: CORS_ORIGINS

@@ -1,5 +1,17 @@
 """Main FastAPI application entry point."""
 
+import logging
+import os
+import sys
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+# Automatically inject project root, packages, and apps into sys.path
+_BASE_DIR = Path(__file__).resolve().parent.parent.parent
+for _p in [str(_BASE_DIR), str(_BASE_DIR / "packages"), str(_BASE_DIR / "apps")]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from apps.api.config import settings
@@ -16,6 +28,34 @@ from apps.api.routers import (
     workspaces_router,
 )
 
+logger = logging.getLogger("agentiq.api")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifecycle event to guarantee DB tables and demo seed exist on boot."""
+    # Ensure local storage folders exist
+    Path("storage").mkdir(parents=True, exist_ok=True)
+    Path("storage/raw").mkdir(parents=True, exist_ok=True)
+    Path("storage/exports").mkdir(parents=True, exist_ok=True)
+
+    try:
+        from agentiq_core.models import Base
+        from agentiq_core.db.session import get_async_engine
+        engine = get_async_engine()
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database schema verified.")
+
+        # Seed demo workspace and user
+        from scripts.seed_demo_data import seed
+        await seed()
+        logger.info("Demo data seed verified.")
+    except Exception as exc:
+        logger.warning(f"Startup initialization notice: {exc}")
+
+    yield
+
 
 def create_app() -> FastAPI:
     """Initialize and configure the FastAPI application."""
@@ -26,6 +66,7 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
+        lifespan=lifespan,
         servers=[
             {"url": "http://localhost:8000", "description": "Local Development Server"},
         ],

@@ -56,8 +56,8 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = "placeholder-service-key"
 
     # Database
-    database_url: str = "postgresql+asyncpg://postgres:password@localhost:5432/postgres"
-    direct_database_url: str = "postgresql://postgres:password@localhost:5432/postgres"
+    database_url: str = "sqlite+aiosqlite:///storage/agentiq.db"
+    direct_database_url: str = "sqlite:///storage/agentiq.db"
     db_echo: bool = False
     db_pool_pre_ping: bool = True
 
